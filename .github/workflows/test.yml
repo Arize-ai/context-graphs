@@ -25,12 +25,30 @@ jobs:
       - name: Run tests
         run: uv run pytest -q
 
-  procurement-reviewer:
-    name: procurement-reviewer (pytest)
+  reviewer-agent:
+    name: reviewer-agent (pytest)
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: procurement-reviewer
+        working-directory: reviewer-agent
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Set up Python
+        run: uv python install 3.12
+      - name: Install dependencies
+        run: uv sync --all-extras --dev
+      - name: Run tests
+        run: uv run pytest -q
+
+  mining-agent:
+    name: mining-agent (pytest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mining-agent
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
@@ -48,7 +66,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: scripts
+        working-directory: procurement-agent/scripts
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
@@ -61,19 +79,19 @@ jobs:
       - name: Run tests
         run: uv run pytest -q
 
-  procurement-ui:
-    name: procurement-ui (vitest)
+  procurement-agent-ui:
+    name: procurement-agent/ui (vitest)
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: procurement-ui
+        working-directory: procurement-agent/ui
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: procurement-ui/package-lock.json
+          cache-dependency-path: procurement-agent/ui/package-lock.json
       - name: Install dependencies
         run: npm ci
       - name: Run tests
