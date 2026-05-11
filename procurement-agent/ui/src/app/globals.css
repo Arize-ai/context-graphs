@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens.
+ *
+ * Surfaces are layered: --background sits behind --surface, which sits
+ * behind --surface-raised. Text tokens are tuned to meet WCAG AA on
+ * --surface (≥ 4.5:1) — that means --muted is darker than the previous
+ * gray-500. Avoid putting --muted-light on top of --surface-muted.
+ */
+
+:root {
+  /* Surfaces — page, cards, hover/sub-surfaces */
+  --background: #f5f6fa;
+  --surface: #ffffff;
+  --surface-muted: #f1f4f9;
+  --surface-raised: #ffffff;
+  --sidebar-bg: #ffffff;
+  --detail-bg: #ffffff;
+
+  /* Text */
+  --foreground: #0f172a;        /* slate-900 */
+  --foreground-soft: #1e293b;   /* slate-800 */
+  --muted: #475569;             /* slate-600 — 7.6:1 on white */
+  --muted-light: #64748b;       /* slate-500 — 5.7:1 on white */
+
+  /* Borders */
+  --border: #e2e8f0;            /* slate-200 */
+  --border-strong: #cbd5e1;     /* slate-300 */
+
+  /* Accent — indigo, but with stronger text variant for AA contrast */
+  --accent: #4f46e5;            /* indigo-600 */
+  --accent-hover: #4338ca;      /* indigo-700 */
+  --accent-active: #3730a3;     /* indigo-800 */
+  --accent-light: #eef2ff;      /* indigo-50 */
+  --accent-soft: #e0e7ff;       /* indigo-100 — for selected rows */
+  --accent-text: #3730a3;       /* indigo-800 — readable on accent-light/soft */
+  --accent-ring: rgba(79, 70, 229, 0.22);
+
+  /* Elevation */
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 8px -2px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
+  --shadow-lg: 0 10px 24px -8px rgba(15, 23, 42, 0.18), 0 4px 8px -4px rgba(15, 23, 42, 0.06);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Smooth focus rings — subtle but visible on light surfaces. */
+*:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Scrollbars — slightly more refined */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-light);
+  background-clip: padding-box;
+  border: 2px solid transparent;
+}

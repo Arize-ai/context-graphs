@@ -1,0 +1,40 @@
+.DS_Store
+node_modules/
+
+# Environment files — never commit secrets
+.env
+.env.*
+!.env.example
+
+# Claude Code local state
+.claude/scheduled_tasks.lock
+.claude/settings.local.json
+
+# Mining run output (reports may be large or contain analysis drafts)
+.context-graph-mining/
+
+# Variant config bundles — products of past loop runs; users get fresh ones
+experiments/variants/
+
+# Python tooling
+.mypy_cache/
+.pytest_cache/
+__pycache__/
+.venv/
+
+# Local SQLite databases (+ WAL/SHM journals)
+procurement-agent/data/*.db
+procurement-agent/data/*.db-shm
+procurement-agent/data/*.db-wal
+
+# .agents/ — duplicates of .claude/skills/ in the agents.md format
+.agents/
+
+# Research + content drafts — kept private to the project
+docs/research/
+docs/sources/
+docs/originals/
+docs/blog-outline.md
+docs/content-artifacts.md
+docs/executive-summary.md
+docs/agent-team.md
