@@ -4,10 +4,13 @@ A self-improving AI loop built around a **context graph** — a structured, quer
 
 A procurement agent evaluates purchase requests against policy. A simulated human reviewer (Vera Fye, a finance manager with 12 years of institutional knowledge that policy doesn't capture) overrides when needed. Every override produces both a traced agent run and a human-review annotation in [Arize AX](https://arize.com/). A mining agent reads those traces, identifies patterns where the policy-driven agent diverges from the human, and proposes changes that move the agent closer to how the organization actually decides.
 
-The loop runs end-to-end:
-
-```
-agent decides → human reviews → traces capture both → mining agent extracts patterns → propose changes → next iteration
+```mermaid
+flowchart LR
+    A[procurement-agent<br/>decides] --> B[reviewer-agent<br/>overrides if needed]
+    B --> C[(Arize AX<br/>traces + annotations)]
+    C --> D[mining-agent<br/>extracts patterns]
+    D --> E[apply skill<br/>writes variant config]
+    E -.->|EXPERIMENT_VARIANT| A
 ```
 
 ---
@@ -15,6 +18,29 @@ agent decides → human reviews → traces capture both → mining agent extract
 ## Architecture
 
 Three independent components — talk over HTTP and a shared Arize project, never directly:
+
+```mermaid
+flowchart LR
+    subgraph PA[procurement-agent]
+        direction TB
+        UI["Next.js UI<br/>:3000"]
+        API["FastAPI<br/>:8000"]
+        SEED["scripts/<br/>seed_requests.py"]
+        UI <--> API
+    end
+
+    RA["reviewer-agent<br/>Vera Fye CLI"]
+    MA["mining-agent<br/>Claude Agent SDK"]
+    VAR["experiments/variants/<br/>config bundles"]
+    AX[("Arize AX")]
+
+    SEED -- "POST /api/requests" --> API
+    RA -- "POST /override" --> API
+    API -. "process.run<br/>override.run<br/>+ annotations" .-> AX
+    MA -- "reads traces" --> AX
+    MA -- "writes overlay" --> VAR
+    VAR -. "EXPERIMENT_VARIANT" .-> API
+```
 
 ```
 procurement-agent/        # FastAPI agent + Next.js UI + seed script
@@ -65,6 +91,23 @@ export ARIZE_SPACE_ID=...        # base64 — copy from app.arize.com URL
 
 ---
 
+## The end-to-end flow
+
+```mermaid
+flowchart TB
+    S0["**Step 1**<br/>Start procurement-agent + UI<br/>npm run dev"]
+    S1["**Step 2**<br/>Seed 130 purchase requests<br/>scripts/seed_requests.py"]
+    S2["**Step 3**<br/>Run the reviewer<br/>reviewer-agent --all"]
+    S3["**Step 4**<br/>Mine the traces<br/>mining-agent"]
+    S4["**Step 5a**<br/>Apply the report<br/>mining-agent apply"]
+    S5["**Step 5b**<br/>Re-run the cycle<br/>mining-agent run-cycle"]
+
+    S0 --> S1 --> S2 --> S3 --> S4 --> S5
+    S5 -.->|next iteration| S3
+```
+
+---
+
 ## 1. Prepare and run the procurement agent + UI
 
 The agent + UI live in one folder so they can be developed and run together.
@@ -108,7 +151,7 @@ Defaults to `http://localhost:8000`, concurrency 10. Configurable via:
 - `SEED_PARALLELISM` (default 10)
 - `SEED_TIMEOUT_SECONDS` (default 180)
 
-A run takes ~2 minutes; expect ~$0.65 in OpenAI spend (gpt-4o-mini × 130 with 3 tool calls each).
+A run takes ~2 minutes.
 
 ---
 
@@ -126,7 +169,7 @@ uv run python -m src --all --parallel 10
 - `--parallel 10` runs 10 reviews concurrently (sequential by default).
 - Idempotent: re-running skips PRs that already have a final review.
 
-Takes ~3 minutes at parallel=10; ~$0.65 in OpenAI spend.
+Takes ~3 minutes at `parallel=10`.
 
 After this, the Arize project `procurement-agent` has 130 process runs + 130 override runs with annotations — the raw substrate the mining agent will read.
 
@@ -147,7 +190,7 @@ uv sync
 uv run python -m src                          # mines the procurement-agent project
 ```
 
-Takes ~5 minutes; ~$2-3 per run in Claude spend. The output is a markdown report saved to `.context-graph-mining/report-<timestamp>.md` describing:
+The output is a markdown report saved to `.context-graph-mining/report-<timestamp>.md` describing:
 
 - Cluster breakdowns (agent says X, reviewer says Y for which vendor / department / amount pattern)
 - Precedent tags Vera cites repeatedly (institutional knowledge)
@@ -166,6 +209,16 @@ uv run python -m src --project procurement-agent-cycle-1-B
 
 The procurement-agent supports **runtime parameterization** through an `EXPERIMENT_VARIANT` env var. When set, the agent loads a config bundle from `experiments/variants/<id>/` on startup — pure additive config, no source modification. The mining report's proposals translate cleanly into these bundles.
 
+```mermaid
+flowchart LR
+    R["mining report<br/>(.context-graph-mining/)"] --> APPLY["mining-agent apply<br/>--cycle N --variant A|B"]
+    APPLY --> BUNDLE["experiments/variants/cycle-N-X/<br/>manifest.yaml<br/>system_prompt.txt<br/>vendors.json<br/>departments.json"]
+    BUNDLE -.->|EXPERIMENT_VARIANT=cycle-N-X| AGENT["variant procurement-agent<br/>own DB, own Arize project"]
+    AGENT --> CYCLE["mining-agent run-cycle<br/>seed + reviewer"]
+    CYCLE --> AX[("procurement-agent-cycle-N-X<br/>Arize project")]
+    AX -.->|mine again| R
+```
+
 ### Apply the mining report's proposals
 
 ```bash
@@ -179,7 +232,7 @@ Two variants per cycle:
 - **A**: prompt-only — appends reviewer-cited rules to the evaluator's system prompt. Cheapest, reversible, tests "does the LLM read the new instruction?"
 - **B**: prompt + structured metadata — additionally writes `vendors.json` + `departments.json` overlays that the agent reads through `lookup_vendor` and `lookup_department`. Tests whether structured-data delivery beats prose.
 
-Each apply costs ~$1-2 and runs ~5 minutes. The output lands in `experiments/variants/cycle-N-X/` with a `manifest.yaml` citing the evidence sessions for each change.
+The output lands in `experiments/variants/cycle-N-X/` with a `manifest.yaml` citing the evidence sessions for each change.
 
 ### Run a full cycle against the variant
 
@@ -257,20 +310,6 @@ Then point `seed_requests.py` and `reviewer-agent` at port 8001 with `PROCUREMEN
 | `mining-agent` | Python 3.12, [Claude Agent SDK](https://docs.claude.com/en/api/agent-sdk/overview), Claude Code skills, httpx |
 | Tracing | [Arize AX](https://arize.com/) via OpenInference, sessions tagged `session.id = request.id` |
 | Tests | pytest, 156 total across all three apps |
-
----
-
-## Cost ranges per loop pass
-
-| Stage | Spend |
-|---|---|
-| Seed (130 process runs × gpt-4o-mini) | ~$0.65 |
-| Reviewer (130 overrides × gpt-4o-mini) | ~$0.65 |
-| Mining (Claude Agent SDK skill invocation) | ~$2-3 |
-| Apply (per variant) | ~$1-2 |
-| **One full cycle (apply A + B + run A + B + mine A + B)** | **~$10-15** |
-
-Defaults to gpt-4o-mini throughout for cost; swap to a stronger model if you want sharper agent reasoning.
 
 ---
 
