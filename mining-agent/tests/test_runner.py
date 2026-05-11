@@ -17,8 +17,11 @@ from src.runner import (
 )
 
 
-def test_repo_root_resolves_to_content_harness() -> None:
-    assert REPO_ROOT.name == "content-harness"
+def test_repo_root_points_at_the_project_root() -> None:
+    """REPO_ROOT must resolve to the directory that holds .claude/skills/ so
+    the Claude Agent SDK can discover the context-graph-mining skill. The
+    folder *name* on disk varies (`content-harness` locally, `context-graphs`
+    when CI clones the repo) — check the structural marker instead."""
     assert (REPO_ROOT / ".claude" / "skills" / "context-graph-mining" / "SKILL.md").exists()
 
 
