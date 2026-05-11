@@ -30,11 +30,5 @@ procurement-agent/data/*.db-wal
 # .agents/ — duplicates of .claude/skills/ in the agents.md format
 .agents/
 
-# Research + content drafts — kept private to the project
-docs/research/
-docs/sources/
-docs/originals/
-docs/blog-outline.md
-docs/content-artifacts.md
-docs/executive-summary.md
-docs/agent-team.md
+# docs/ — internal specs, research, and content drafts kept out of the public repo
+docs/

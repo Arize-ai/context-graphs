@@ -163,10 +163,3 @@ The procurement-agent supports an `EXPERIMENT_VARIANT` env var that selects a co
 
 The mining-agent's `apply` subcommand generates these bundles from a mining report. Variants are committable as repo state — anyone can clone, set `EXPERIMENT_VARIANT=cycle-3-A`, and reproduce the variant agent's behavior.
 
-## Key specifications
-
-Implementation/decision docs live under `docs/`:
-- `project-plan.md` — implementation plan, architecture, phased build order
-- `demo-spec.md` — sample data definitions, decision trace schema, demo flow
-
-Research, blog drafts, content artifacts, and other private content live in subdirectories of `docs/` that are gitignored (see `.gitignore`).

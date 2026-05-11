@@ -95,12 +95,12 @@ export ARIZE_SPACE_ID=...        # base64 — copy from app.arize.com URL
 
 ```mermaid
 flowchart TB
-    S0["**Step 1**<br/>Start procurement-agent + UI<br/>npm run dev"]
-    S1["**Step 2**<br/>Seed 130 purchase requests<br/>scripts/seed_requests.py"]
-    S2["**Step 3**<br/>Run the reviewer<br/>reviewer-agent --all"]
-    S3["**Step 4**<br/>Mine the traces<br/>mining-agent"]
-    S4["**Step 5a**<br/>Apply the report<br/>mining-agent apply"]
-    S5["**Step 5b**<br/>Re-run the cycle<br/>mining-agent run-cycle"]
+    S0["<b>Step 1</b><br/>Start procurement-agent + UI<br/>npm run dev"]
+    S1["<b>Step 2</b><br/>Seed 130 purchase requests<br/>scripts/seed_requests.py"]
+    S2["<b>Step 3</b><br/>Run the reviewer<br/>reviewer-agent --all"]
+    S3["<b>Step 4</b><br/>Mine the traces<br/>mining-agent"]
+    S4["<b>Step 5a</b><br/>Apply the report<br/>mining-agent apply"]
+    S5["<b>Step 5b</b><br/>Re-run the cycle<br/>mining-agent run-cycle"]
 
     S0 --> S1 --> S2 --> S3 --> S4 --> S5
     S5 -.->|next iteration| S3
