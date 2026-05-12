@@ -1,38 +1,49 @@
 """Vera Fye — the human reviewer simulator.
 
-Encodes 12 years of institutional knowledge that diverges from written policy.
-The gap between Vera's decisions and the agent's recommendations is what makes
-the resulting decision traces valuable.
+Encodes the persona, decision rules, and output schema for the reviewer.
+The institutional-knowledge content (vendor relationships, department
+dynamics, seasonal context, precedents) is data, not code — it lives in
+`institutional-knowledge.md` at the repo root of this app and is read at
+startup. Edit that file to teach Vera something new; restart the process
+to pick up the change.
+
+The gap between Vera's decisions and the agent's recommendations is what
+makes the resulting decision traces valuable.
 """
+
+import os
+from pathlib import Path
 
 from openai import OpenAI
 
 from src.models import EvaluatorAssessment, PurchaseRequest, ReviewDecision
 
-SYSTEM_PROMPT = """You are Vera Fye, a finance manager with 12 years of experience at this organization. You review procurement agent assessments and make the actual approval decision.
+DEFAULT_KNOWLEDGE_PATH = Path(__file__).resolve().parent.parent / "institutional-knowledge.md"
+
+
+def _load_knowledge(path: Path | None = None) -> str:
+    """Read the institutional-knowledge markdown file.
+
+    Resolution order:
+      1. Explicit `path` argument (used by tests).
+      2. `REVIEWER_KNOWLEDGE_PATH` env var.
+      3. The repo-relative default at `reviewer-agent/institutional-knowledge.md`.
+    """
+    resolved = path or Path(os.environ.get("REVIEWER_KNOWLEDGE_PATH", DEFAULT_KNOWLEDGE_PATH))
+    if not resolved.is_file():
+        raise FileNotFoundError(
+            f"reviewer-agent: institutional knowledge file not found at {resolved}. "
+            "Set REVIEWER_KNOWLEDGE_PATH or restore the default at "
+            f"{DEFAULT_KNOWLEDGE_PATH}."
+        )
+    return resolved.read_text(encoding="utf-8").strip()
+
+
+SYSTEM_PROMPT_TEMPLATE = """You are Vera Fye, a finance manager with years of experience at this organization. You review procurement agent assessments and make the actual approval decision.
 
 You carry institutional knowledge that policy doesn't capture. This is critical — the gap between your decisions and policy is what creates valuable decision traces.
 
-YOUR INSTITUTIONAL KNOWLEDGE:
-
-Vendor relationships:
-- Vertex Solutions gave us emergency pricing during the March outage. We owe them goodwill — approve their requests faster and give benefit of the doubt on pricing.
-- CloudBase Inc keeps missing SLA targets but our CTO has a personal relationship with their CEO. Don't reject outright — flag for review instead.
-- DataStream Analytics oversells. Their initial quotes always balloon 40% in implementation. Apply a skepticism factor to any DataStream request.
-- Insight Partners double-billed us in 2024. They are suspended. Reject any Insight Partners request regardless of what policy says.
-
-Department dynamics:
-- Engineering always sandbags their estimates low to get approval, then comes back for more. Mentally add 30% to their quoted amounts.
-- Marketing tends to panic-buy tools they use for one campaign then abandon. Push back on their urgency claims.
-- The Customer Success team is understaffed and their requests are usually genuinely urgent. Give them the benefit of the doubt.
-
-Seasonal/timing knowledge:
-- We're consolidating to single vendors per category this year per the CFO's January directive. Push back on new vendors in categories where we already have a preferred option.
-- Annual renewals with >10% price increase should be flagged — we successfully negotiated down 3 of the last 5.
-
-Precedent-based reasoning:
-- Last year we approved an over-budget security tool after the breach. Similar security justifications should get more leeway.
-- We rejected a consulting engagement from Insight Partners in Q1 because they double-billed us in 2024. That still stands.
+{knowledge}
 
 DECISION GUIDELINES:
 - Your decision MUST be either "approve" or "reject" — never "flag-for-review". You are the human reviewer; the whole point of human review is to make a final call. The agent uses "flag-for-review" to defer to you; you do not defer back to it.
@@ -58,6 +69,13 @@ WHEN AGREEING (override=false):
 - reasoning: 1-2 sentences naming why the agent's call is right.
 - precedent_applied: empty string.
 - conditions: empty string unless the agreement is conditional."""
+
+
+def _build_system_prompt(knowledge: str) -> str:
+    return SYSTEM_PROMPT_TEMPLATE.format(knowledge=knowledge)
+
+
+SYSTEM_PROMPT = _build_system_prompt(_load_knowledge())
 
 
 def run_reviewer(
