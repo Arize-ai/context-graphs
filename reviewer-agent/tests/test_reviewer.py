@@ -1,6 +1,6 @@
 """Tests for the institutional-knowledge loader + system-prompt assembly.
 
-These don't hit OpenAI — they only exercise the file-loading and
+These don't hit Anthropic — they only exercise the file-loading and
 prompt-templating logic. Vera's actual LLM call is exercised end-to-end
 by the procurement-agent integration runs, not here.
 """

@@ -14,7 +14,7 @@ makes the resulting decision traces valuable.
 import os
 from pathlib import Path
 
-from openai import OpenAI
+from anthropic import Anthropic
 
 from src.models import EvaluatorAssessment, PurchaseRequest, ReviewDecision
 
@@ -78,11 +78,26 @@ def _build_system_prompt(knowledge: str) -> str:
 SYSTEM_PROMPT = _build_system_prompt(_load_knowledge())
 
 
+# Anthropic structured output is delivered through tool use. We declare one
+# tool whose input schema is `ReviewDecision`, then force Claude to call it
+# via `tool_choice`. The tool's `input` block on the response is the
+# structured review.
+_REVIEW_TOOL_NAME = "submit_review"
+_REVIEW_TOOL = {
+    "name": _REVIEW_TOOL_NAME,
+    "description": (
+        "Submit Vera Fye's final review decision for a procurement request. "
+        "All fields are required per the system prompt's structure rules."
+    ),
+    "input_schema": ReviewDecision.model_json_schema(),
+}
+
+
 def run_reviewer(
-    client: OpenAI,
+    client: Anthropic,
     request: PurchaseRequest,
     assessment: EvaluatorAssessment,
-    model: str = "gpt-4o-mini",
+    model: str = "claude-haiku-4-5",
 ) -> ReviewDecision:
     """Run Vera on an existing assessment and return her decision."""
     user_message = f"""Review this procurement assessment:
@@ -109,15 +124,26 @@ EVALUATOR ASSESSMENT:
 - Confidence: {assessment.confidence.value}
 - Risk factors: {', '.join(assessment.risk_factors) if assessment.risk_factors else 'None'}
 
-Make your decision as Vera Fye. If you override the agent's recommendation, explain why using your institutional knowledge."""
+Make your decision as Vera Fye. Call the `submit_review` tool with your decision. If you override the agent's recommendation, explain why using your institutional knowledge."""
 
-    response = client.beta.chat.completions.parse(
+    response = client.messages.create(
         model=model,
-        messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": user_message},
-        ],
-        response_format=ReviewDecision,
+        max_tokens=2048,
+        system=SYSTEM_PROMPT,
+        messages=[{"role": "user", "content": user_message}],
+        tools=[_REVIEW_TOOL],
+        tool_choice={"type": "tool", "name": _REVIEW_TOOL_NAME},
     )
 
-    return response.choices[0].message.parsed
+    tool_use = next(
+        (block for block in response.content if getattr(block, "type", None) == "tool_use"),
+        None,
+    )
+    if tool_use is None:
+        raise RuntimeError(
+            f"reviewer-agent: model did not call `{_REVIEW_TOOL_NAME}` for "
+            f"request {request.id} (stop_reason={response.stop_reason}, "
+            f"content blocks={[getattr(b, 'type', '?') for b in response.content]})"
+        )
+
+    return ReviewDecision.model_validate(tool_use.input)

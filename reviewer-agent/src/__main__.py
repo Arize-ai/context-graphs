@@ -23,7 +23,7 @@ import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import httpx
-from openai import OpenAI
+from anthropic import Anthropic
 
 from src.api_client import AgentClient
 from src.models import AssessmentRecord, HumanOverride, PurchaseRequest, ReviewDecision
@@ -70,14 +70,14 @@ def _latest_per_request(records: list[AssessmentRecord]) -> dict[str, Assessment
 
 
 def _review_one(
-    openai_client: OpenAI,
+    anthropic_client: Anthropic,
     agent: AgentClient,
     request: PurchaseRequest,
     record: AssessmentRecord,
     model: str,
 ) -> bool:
     """Generate Vera's decision and route it through /override. True on success."""
-    review = run_reviewer(openai_client, request, record.assessment, model=model)
+    review = run_reviewer(anthropic_client, request, record.assessment, model=model)
     body = _to_override(review)
     try:
         agent.override(request.id, body)
@@ -96,7 +96,7 @@ def _review_one(
 
 
 def _review_request(
-    openai_client: OpenAI,
+    anthropic_client: Anthropic,
     agent: AgentClient,
     request_id: str,
     model: str,
@@ -118,11 +118,11 @@ def _review_request(
         print(f"  - {request_id}: latest assessment already has a final decision")
         return False
 
-    return _review_one(openai_client, agent, request, latest, model)
+    return _review_one(anthropic_client, agent, request, latest, model)
 
 
 def _review_all(
-    openai_client: OpenAI,
+    anthropic_client: Anthropic,
     agent: AgentClient,
     model: str,
     parallel: int = 1,
@@ -133,7 +133,7 @@ def _review_all(
     non-decisive `flag-for-review` (see `_needs_review`).
 
     With `parallel > 1`, reviews run concurrently in a ThreadPoolExecutor.
-    The httpx.Client and OpenAI client are both safe to share across
+    The httpx.Client and Anthropic client are both safe to share across
     threads. Output ordering will interleave but progress lines stay
     intact.
     """
@@ -150,7 +150,7 @@ def _review_all(
         if request is None:
             print(f"  ! {record.request_id}: not found", file=sys.stderr)
             return False
-        return _review_one(openai_client, agent, request, record, model)
+        return _review_one(anthropic_client, agent, request, record, model)
 
     if parallel <= 1:
         return sum(1 for record in pending if _process(record))
@@ -182,7 +182,11 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Review every request in the store whose latest assessment is unreviewed.",
     )
-    parser.add_argument("--model", default="gpt-4o-mini", help="OpenAI model (default: gpt-4o-mini).")
+    parser.add_argument(
+        "--model",
+        default="claude-haiku-4-5",
+        help="Anthropic model (default: claude-haiku-4-5).",
+    )
     parser.add_argument(
         "--parallel",
         type=int,
@@ -198,13 +202,13 @@ def main(argv: list[str] | None = None) -> int:
     if args.parallel < 1:
         parser.error("--parallel must be >= 1")
 
-    openai_client = OpenAI()
+    anthropic_client = Anthropic()
     with AgentClient() as agent:
         if args.all:
-            _review_all(openai_client, agent, args.model, parallel=args.parallel)
+            _review_all(anthropic_client, agent, args.model, parallel=args.parallel)
         else:
             for rid in args.request_ids:
-                _review_request(openai_client, agent, rid, args.model)
+                _review_request(anthropic_client, agent, rid, args.model)
     return 0
 
 

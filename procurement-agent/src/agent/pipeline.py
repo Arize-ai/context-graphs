@@ -26,7 +26,7 @@ from src.models import AssessmentRecord, HumanOverride, PurchaseRequest
 def process_request(
     conn: sqlite3.Connection,
     request: PurchaseRequest,
-    model: str = "gpt-4o-mini",
+    model: str = "claude-haiku-4-5",
     override: HumanOverride | None = None,
 ) -> tuple[AssessmentRecord, str | None]:
     """Run the evaluator on a purchase request and return its assessment.

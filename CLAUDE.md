@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This repository is a working demo of **context graphs** — structured, queryable records of how an organization actually makes decisions, captured automatically through AI agent runs and human reviews. The README is the user-facing intro; this file captures the deeper detail.
 
-A procurement agent evaluates purchase requests against policy. A simulated human reviewer (Vera Fye, a finance manager with 12 years of institutional knowledge that policy doesn't capture) overrides when needed. Every override produces both a traced agent run and a human-review annotation in [Arize AX](https://arize.com/). A mining agent reads those traces, identifies patterns, and proposes runtime config changes that move the agent closer to how the org actually decides — without ever modifying the agent's source code.
+A procurement agent evaluates purchase requests against policy. A simulated human reviewer (Vera Fye, a finance manager with years of institutional knowledge that policy doesn't capture) overrides when needed. Every override produces both a traced agent run and a human-review annotation in [Arize AX](https://arize.com/). A mining agent reads those traces, identifies patterns, and proposes runtime config changes that move the agent closer to how the org actually decides — without ever modifying the agent's source code.
 
 ## Architecture
 
@@ -57,11 +57,11 @@ Next.js 16 + TypeScript + Tailwind CSS v4. Single-page client component (sidebar
 
 #### Scripts (`procurement-agent/scripts/`)
 
-The 30 curated + 100 procedurally-generated demo purchase requests live under `synthetic_data.py`, decoupled from the agent. The companion `seed_requests.py` POSTs them all through the API in parallel (10 concurrent, deterministic order, ~2 min wall time). Each script run is one LLM call per request, so it costs real OpenAI tokens (~$0.65 per pass).
+The 30 curated + 100 procedurally-generated demo purchase requests live under `synthetic_data.py`, decoupled from the agent. The companion `seed_requests.py` POSTs them all through the API in parallel (10 concurrent, deterministic order, ~2 min wall time). Each script run is one LLM call per request, so it costs real Anthropic tokens.
 
 ### Reviewer agent (`reviewer-agent/`)
 
-Standalone Python CLI that simulates **Vera Fye**, a finance manager with 12 years of institutional knowledge. Talks to `procurement-agent` over HTTP only — no shared code or DB.
+Standalone Python CLI that simulates **Vera Fye**, a finance manager with years of institutional knowledge. Talks to `procurement-agent` over HTTP only — no shared code or DB.
 
 Vera's decisions are sent through `POST /api/requests/{id}/override` rather than the legacy attach-review endpoint, so each Vera review re-runs the agent with her decision + reasoning + precedent + conditions as additional input. That run is captured in Arize and tagged with `session.id = request.id`, so every Vera review produces a traced agent run.
 
@@ -74,7 +74,7 @@ uv run python -m src --all                     # every request whose latest asse
 uv run python -m src --all --parallel 10       # 10 concurrent workers (~10× faster)
 ```
 
-Configurable via `PROCUREMENT_AGENT_URL`, `OPENAI_API_KEY`. System prompt at `src/reviewer.py` encodes Vera's institutional knowledge and (since cycle 4) requires canonical-tag `precedent_applied` for every override.
+Configurable via `PROCUREMENT_AGENT_URL`, `ANTHROPIC_API_KEY`. System prompt at `src/reviewer.py` composes the persona/decision rules with Vera's institutional knowledge from `reviewer-agent/institutional-knowledge.md` at startup; cycle 4 onward requires a canonical-tag `precedent_applied` for every override.
 
 ### Mining agent (`mining-agent/`)
 

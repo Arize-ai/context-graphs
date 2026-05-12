@@ -10,7 +10,7 @@ agent's input — and therefore into the Arize trace.
 import sqlite3
 
 from langchain.agents import create_agent
-from langchain_openai import ChatOpenAI
+from langchain_anthropic import ChatAnthropic
 
 from src.agent.tools import check_budget, check_policy, lookup_department, lookup_vendor
 from src.models import EvaluatorAssessment, HumanOverride, PurchaseRequest
@@ -83,7 +83,7 @@ Set request_id to "{request.id}" in your output."""
 def run_evaluator(
     conn: sqlite3.Connection,
     request: PurchaseRequest,
-    model: str = "gpt-4o-mini",
+    model: str = "claude-haiku-4-5",
     override: HumanOverride | None = None,
 ) -> EvaluatorAssessment:
     """Run the LangChain procurement evaluator and return its structured assessment.
@@ -108,7 +108,7 @@ def run_evaluator(
             system_prompt = SYSTEM_PROMPT + "\n\n" + variant.extra_context
 
     agent = create_agent(
-        model=ChatOpenAI(model=model),
+        model=ChatAnthropic(model=model),
         tools=tools,
         system_prompt=system_prompt,
         response_format=EvaluatorAssessment,

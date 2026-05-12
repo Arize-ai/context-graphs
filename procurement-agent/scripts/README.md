@@ -48,4 +48,4 @@ Done in 103.4s. Succeeded: 130, Failed: 0, Total: 130
 ```
 
 A typical full run is ~100 seconds. Each request triggers an LLM call
-inside the agent, so this consumes real OpenAI tokens.
+inside the agent, so this consumes real Anthropic tokens.

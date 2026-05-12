@@ -5,11 +5,11 @@ requests + reference data, the evaluator entry point at
 `POST /api/requests/{id}/process`, and the human-review attach endpoint at
 `POST /api/assessments/{session_id}/review`. Importing this module
 transitively imports `src.instrumentation`, which must run before any
-LangChain or OpenAI module is imported so the OpenInference instrumentors
+LangChain or Anthropic module is imported so the OpenInference instrumentors
 can monkey-patch them on load.
 """
 
-import src.instrumentation  # noqa: F401  — must run before LangChain / OpenAI imports
+import src.instrumentation  # noqa: F401  — must run before LangChain / Anthropic imports
 
 from contextlib import asynccontextmanager
 

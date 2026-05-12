@@ -58,7 +58,7 @@ class TestProcessEndpoint:
     def test_returns_assessment_record(self, client: TestClient):
         with patch(
             "src.agent.pipeline.run_evaluator",
-            side_effect=lambda conn, req, model="gpt-4o-mini", override=None: _fake_assessment(req.id),
+            side_effect=lambda conn, req, model="claude-haiku-4-5", override=None: _fake_assessment(req.id),
         ):
             resp = client.post("/api/requests/PR-001/process")
         assert resp.status_code == 200
@@ -71,7 +71,7 @@ class TestProcessEndpoint:
     def test_persists_assessment(self, client: TestClient):
         with patch(
             "src.agent.pipeline.run_evaluator",
-            side_effect=lambda conn, req, model="gpt-4o-mini", override=None: _fake_assessment(req.id),
+            side_effect=lambda conn, req, model="claude-haiku-4-5", override=None: _fake_assessment(req.id),
         ):
             client.post("/api/requests/PR-001/process")
 
@@ -84,7 +84,7 @@ class TestProcessEndpoint:
     def test_request_status_transitions_to_completed(self, client: TestClient):
         with patch(
             "src.agent.pipeline.run_evaluator",
-            side_effect=lambda conn, req, model="gpt-4o-mini", override=None: _fake_assessment(req.id),
+            side_effect=lambda conn, req, model="claude-haiku-4-5", override=None: _fake_assessment(req.id),
         ):
             client.post("/api/requests/PR-001/process")
 
@@ -99,7 +99,7 @@ class TestProcessEndpoint:
         """POST /override re-runs the agent with the override and attaches a review."""
         captured: dict = {}
 
-        def fake_eval(conn, req, model="gpt-4o-mini", override=None):
+        def fake_eval(conn, req, model="claude-haiku-4-5", override=None):
             captured["override"] = override
             # Mirror the override decision in the recommendation so the
             # endpoint's `override` flag computation is exercised against a
@@ -137,7 +137,7 @@ class TestProcessEndpoint:
         agent prompt (visible in the trace) and the persisted ReviewDecision."""
         captured: dict = {}
 
-        def fake_eval(conn, req, model="gpt-4o-mini", override=None):
+        def fake_eval(conn, req, model="claude-haiku-4-5", override=None):
             captured["override"] = override
             from src.models import Recommendation
             rec = Recommendation(override.decision.value) if override else Recommendation.APPROVE
@@ -175,7 +175,7 @@ class TestProcessEndpoint:
         (conftest installs a TracerProvider) so root_span_id is non-None."""
         captured: dict = {}
 
-        def fake_eval(conn, req, model="gpt-4o-mini", override=None):
+        def fake_eval(conn, req, model="claude-haiku-4-5", override=None):
             from src.models import Recommendation
             rec = Recommendation(override.decision.value) if override else Recommendation.APPROVE
             return _fake_assessment(req.id).model_copy(update={"recommendation": rec})
@@ -210,7 +210,7 @@ class TestProcessEndpoint:
     def test_override_succeeds_when_annotation_fails(self, client: TestClient):
         """If the annotation push raises, the override must still succeed —
         the persisted ReviewDecision is the durable record."""
-        def fake_eval(conn, req, model="gpt-4o-mini", override=None):
+        def fake_eval(conn, req, model="claude-haiku-4-5", override=None):
             from src.models import Recommendation
             rec = Recommendation(override.decision.value) if override else Recommendation.APPROVE
             return _fake_assessment(req.id).model_copy(update={"recommendation": rec})

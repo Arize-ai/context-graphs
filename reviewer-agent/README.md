@@ -1,6 +1,6 @@
 # Reviewer Agent
 
-A standalone CLI tool that simulates **Vera Fye**, a finance manager with 12 years of institutional knowledge, attaching human review decisions to procurement-agent assessments.
+A standalone CLI tool that simulates **Vera Fye**, a finance manager with years of institutional knowledge, attaching human review decisions to procurement-agent assessments.
 
 This is intentionally a separate app from `procurement-agent`. The agent runs the evaluator and produces an assessment when a request comes in. Some time later — possibly hours or days, mirroring how human review actually happens in an organization — this tool is invoked to attach Vera's decision to that assessment.
 
@@ -28,7 +28,7 @@ PROCUREMENT_AGENT_URL=http://localhost:8001 uv run python -m src --all
 | Env var | Default | Purpose |
 |---|---|---|
 | `PROCUREMENT_AGENT_URL` | `http://localhost:8000` | Base URL for the procurement-agent API |
-| `OPENAI_API_KEY` | — | Required. OpenAI client uses this. |
+| `ANTHROPIC_API_KEY` | — | Required. Anthropic client uses this. |
 
 ## How it relates to the demo
 

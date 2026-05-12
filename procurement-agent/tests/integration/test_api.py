@@ -55,11 +55,11 @@ def client(tmp_path: Path):
 
 @pytest.fixture()
 def client_with_mocked_agent(tmp_path: Path):
-    """Client whose create endpoint sees a stub evaluator instead of OpenAI."""
+    """Client whose create endpoint sees a stub evaluator instead of Anthropic."""
     db_path = _seeded_db_path(tmp_path)
     with patch("src.main.get_connection", lambda: get_connection(db_path)), patch(
         "src.agent.pipeline.run_evaluator",
-        side_effect=lambda conn, req, model="gpt-4o-mini", override=None: _fake_assessment(req.id),
+        side_effect=lambda conn, req, model="claude-haiku-4-5", override=None: _fake_assessment(req.id),
     ):
         from src.main import app
         yield TestClient(app)

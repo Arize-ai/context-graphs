@@ -116,7 +116,7 @@ def test_override_is_forwarded_to_evaluator():
 
     captured: dict = {}
 
-    def fake_eval(conn, request, model="gpt-4o-mini", override=None):
+    def fake_eval(conn, request, model="claude-haiku-4-5", override=None):
         captured["override"] = override
         return _fake_assessment(request.id)
 
@@ -137,7 +137,7 @@ def test_using_attributes_wraps_evaluator_call():
         yield
         order.append("exit")
 
-    def fake_eval(conn, request, model="gpt-4o-mini", override=None):
+    def fake_eval(conn, request, model="claude-haiku-4-5", override=None):
         order.append("evaluator")
         return _fake_assessment(request.id)
 

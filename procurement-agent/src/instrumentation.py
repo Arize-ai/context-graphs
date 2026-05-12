@@ -1,6 +1,6 @@
 """Arize AX tracing setup for the procurement agent.
 
-This module is imported by `src.main` *before* any LangChain / OpenAI imports
+This module is imported by `src.main` *before* any LangChain / Anthropic imports
 so the OpenInference instrumentors can monkey-patch those libraries on load.
 
 Reads `ARIZE_API_KEY` and `ARIZE_SPACE_ID` from the environment; if either is
@@ -54,7 +54,6 @@ def setup_tracing(project_name: str | None = None) -> None:
 
     from arize.otel import register
     from openinference.instrumentation.langchain import LangChainInstrumentor
-    # from openinference.instrumentation.openai import OpenAIInstrumentor
 
     tracer_provider = register(
         space_id=space_id,
@@ -65,7 +64,6 @@ def setup_tracing(project_name: str | None = None) -> None:
     )
 
     LangChainInstrumentor().instrument(tracer_provider=tracer_provider)
-    # OpenAIInstrumentor().instrument(tracer_provider=tracer_provider)
 
     _INSTRUMENTED = True
     print(

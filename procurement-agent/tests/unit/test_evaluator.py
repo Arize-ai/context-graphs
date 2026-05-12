@@ -54,7 +54,7 @@ def _make_request() -> PurchaseRequest:
 
 @pytest.fixture
 def stub_create_agent(monkeypatch: pytest.MonkeyPatch) -> dict:
-    """Replace `create_agent` and `ChatOpenAI` so no LLM is invoked.
+    """Replace `create_agent` and `ChatAnthropic` so no LLM is invoked.
 
     Returns a dict that captures the kwargs `create_agent` was called with.
     """
@@ -67,7 +67,7 @@ def stub_create_agent(monkeypatch: pytest.MonkeyPatch) -> dict:
         return agent
 
     monkeypatch.setattr(ev_mod, "create_agent", fake_create_agent)
-    monkeypatch.setattr(ev_mod, "ChatOpenAI", MagicMock)
+    monkeypatch.setattr(ev_mod, "ChatAnthropic", MagicMock)
     return captured
 
 

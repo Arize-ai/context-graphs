@@ -49,7 +49,7 @@ procurement-agent/        # FastAPI agent + Next.js UI + seed script
 └── scripts/              #   - 130 synthetic purchase-request inputs
 
 reviewer-agent/           # Vera Fye simulator (Python CLI)
-                          #   - OpenAI w/ system prompt encoding 12 yrs of context
+                          #   - Anthropic w/ a markdown file of institutional knowledge
                           #   - Idempotent; runs in parallel against the agent's /override
 
 mining-agent/             # Mining + cycle orchestration (Claude Agent SDK)
@@ -77,14 +77,14 @@ Traces are grouped by `session.id = request.id`, so every run for a given purcha
 |---|---|
 | Python 3.12 + `uv` | `brew install uv` |
 | Node 20+ + `npm` | for the UI |
-| OpenAI API key | the agent + reviewer both use it |
+| Anthropic API key | the agent, reviewer, and mining-agent all use it |
 | Arize AX account | for tracing + annotations |
 | `ax` CLI (optional but recommended) | `pipx install arize-ax-cli`, then `ax profiles create` |
 
 Set in your shell or in a `.env` at the repo root:
 
 ```bash
-export OPENAI_API_KEY=...
+export ANTHROPIC_API_KEY=...
 export ARIZE_API_KEY=...
 export ARIZE_SPACE_ID=...        # base64 — copy from app.arize.com URL
 ```
@@ -277,7 +277,7 @@ Then point `seed_requests.py` and `reviewer-agent` at port 8001 with `PROCUREMEN
 ```
 .
 ├── procurement-agent/       # FastAPI agent + Next.js UI + seed scripts
-│   ├── pyproject.toml       #   Python: FastAPI, LangChain, Arize OTel, OpenAI
+│   ├── pyproject.toml       #   Python: FastAPI, LangChain, Arize OTel, Anthropic
 │   ├── src/                 #   Models, DB, agent pipeline, instrumentation
 │   ├── tests/               #   127 tests (unit + integration)
 │   ├── ui/                  #   Next.js 16 + React 19 + Tailwind v4
@@ -304,9 +304,9 @@ Then point `seed_requests.py` and `reviewer-agent` at port 8001 with `PROCUREMEN
 
 | Component | Stack |
 |---|---|
-| `procurement-agent` | Python 3.12, FastAPI, [LangChain](https://www.langchain.com/) 1.x, SQLite, [Arize OTel](https://arize.com/) + [OpenInference](https://github.com/Arize-ai/openinference) LangChain instrumentor, [OpenAI](https://platform.openai.com/) gpt-4o-mini |
+| `procurement-agent` | Python 3.12, FastAPI, [LangChain](https://www.langchain.com/) 1.x, SQLite, [Arize OTel](https://arize.com/) + [OpenInference](https://github.com/Arize-ai/openinference) LangChain instrumentor, [Anthropic](https://www.anthropic.com/) Claude Haiku 4.5 |
 | `procurement-agent/ui` | Next.js 16, React 19, Tailwind CSS v4, TypeScript |
-| `reviewer-agent` | Python 3.12, OpenAI, httpx |
+| `reviewer-agent` | Python 3.12, [Anthropic](https://www.anthropic.com/) SDK with tool-use structured output, httpx |
 | `mining-agent` | Python 3.12, [Claude Agent SDK](https://docs.claude.com/en/api/agent-sdk/overview), Claude Code skills, httpx |
 | Tracing | [Arize AX](https://arize.com/) via OpenInference, sessions tagged `session.id = request.id` |
 | Tests | pytest, 156 total across all three apps |
