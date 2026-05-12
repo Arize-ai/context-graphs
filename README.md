@@ -81,13 +81,22 @@ Traces are grouped by `session.id = request.id`, so every run for a given purcha
 | Arize AX account | for tracing + annotations |
 | `ax` CLI (optional but recommended) | `pipx install arize-ax-cli`, then `ax profiles create` |
 
-Set in your shell or in a `.env` at the repo root:
+Copy the template and fill in your values:
 
 ```bash
-export ANTHROPIC_API_KEY=...
-export ARIZE_API_KEY=...
-export ARIZE_SPACE_ID=...        # base64 — copy from app.arize.com URL
+cp .env.example .env
+# edit .env — ANTHROPIC_API_KEY, ARIZE_API_KEY, ARIZE_SPACE_ID
 ```
+
+The Python apps (`procurement-agent`, `reviewer-agent`, `mining-agent`, and `procurement-agent/scripts`) autoload the repo-root `.env` on startup via `python-dotenv`, regardless of which directory you run them from. Variables set in your shell take precedence over the file.
+
+For the UI:
+
+```bash
+cp procurement-agent/ui/.env.local.example procurement-agent/ui/.env.local
+```
+
+`.env.local` is optional — defaults work when the agent runs on `localhost:8000`.
 
 ---
 

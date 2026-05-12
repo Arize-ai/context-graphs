@@ -24,6 +24,9 @@ import time
 from typing import Any
 
 import httpx
+from dotenv import find_dotenv, load_dotenv
+
+load_dotenv(find_dotenv())
 
 from synthetic_data import all_requests, to_create_body
 

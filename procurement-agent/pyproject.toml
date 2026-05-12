@@ -16,6 +16,7 @@ dependencies = [
     "opentelemetry-exporter-otlp<1.35",
     "arize>=7.54.0",
     "pandas>=2.3.3",
+    "python-dotenv>=1.0",
 ]
 
 [dependency-groups]
