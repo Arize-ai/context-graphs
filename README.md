@@ -1,6 +1,10 @@
-# Procurement Context Graph Demo
+# Building a self-improving agent on a context graph of human disagreement Demo
 
 A self-improving AI loop built around a **context graph** — a structured, queryable record of how an organization actually makes decisions, captured automatically through AI agent runs and human reviews.
+
+Read the blog post: [Building a self-improving agent on a context graph of human disagreement](https://arize.com/blog/self-improving-agent-with-context-graph)
+
+![Cartoon of a customer at a spare-parts counter being told "I don't care if you can see it on the shelf, the AI agent says we don't have any"; the word "computer" is crossed out and replaced with "AI agent"](https://arize.com/wp-content/uploads/2026/05/computer-says-no-768x419.png)
 
 A procurement agent evaluates purchase requests against policy. A simulated human reviewer (Vera Fye, a finance manager with 12 years of institutional knowledge that policy doesn't capture) overrides when needed. Every override produces both a traced agent run and a human-review annotation in [Arize AX](https://arize.com/). A mining agent reads those traces, identifies patterns where the policy-driven agent diverges from the human, and proposes changes that move the agent closer to how the organization actually decides.
 
